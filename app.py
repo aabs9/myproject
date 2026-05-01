@@ -67,7 +67,7 @@ ATTACK_COLORS = {
 
 @app.route("/")
 def index():
-    return render_template("indexx.html")
+    return render_template("index.html")
 
 
 @app.route("/predict", methods=["POST"])
