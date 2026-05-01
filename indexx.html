@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cyber Threat Detection Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0e1a;--accent:#00d4ff;--accent2:#7c3aed;--accent3:#10b981;
+  --danger:#ef4444;--warn:#f59e0b;
+  --text:#e2e8f0;--muted:#64748b;
+  --border:rgba(0,212,255,0.15);--border2:rgba(255,255,255,0.06);
+  --card:rgba(15,21,40,0.97);
+  --mono:'Share Tech Mono',monospace;--head:'Rajdhani',sans-serif;
+}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);font-size:14px;display:flex;flex-direction:column}
+body::before{content:'';position:fixed;inset:0;
+  background-image:linear-gradient(rgba(0,212,255,0.03) 1px,transparent 1px),
+  linear-gradient(90deg,rgba(0,212,255,0.03) 1px,transparent 1px);
+  background-size:40px 40px;pointer-events:none;z-index:0}
+
+/* TOPBAR */
+.topbar{position:relative;z-index:10;flex-shrink:0;background:rgba(10,14,26,0.98);
+  border-bottom:1px solid var(--border);padding:10px 24px;
+  display:flex;align-items:center;justify-content:space-between;gap:20px}
+.topbar-left{display:flex;align-items:center;gap:12px}
+.live-badge{display:inline-flex;align-items:center;gap:6px;
+  background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.3);
+  border-radius:3px;padding:3px 10px;font-size:10px;letter-spacing:2px;
+  color:#6ee7b7;font-family:var(--head);font-weight:600;white-space:nowrap}
+.dot{width:6px;height:6px;border-radius:50%;background:#10b981;animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.topbar-title{font-family:var(--head);font-size:21px;font-weight:700;letter-spacing:0.5px;
+  background:linear-gradient(135deg,#fff 20%,var(--accent) 80%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;white-space:nowrap}
+.topbar-sub{font-size:10px;color:var(--muted);letter-spacing:1.5px;font-family:var(--head)}
+.topbar-credits{font-size:12px;color:var(--muted);font-family:var(--head);
+  text-align:right;line-height:1.8;flex-shrink:0}
+.topbar-credits strong{color:rgba(0,212,255,.8);font-weight:600}
+
+/* STATS BAR */
+.statsbar{position:relative;z-index:9;flex-shrink:0;
+  display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--border)}
+.stat{padding:9px 18px;border-right:1px solid var(--border);position:relative;overflow:hidden}
+.stat:last-child{border-right:none}
+.stat::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--c,var(--accent))}
+.stat-label{font-size:10px;letter-spacing:2px;color:var(--muted);margin-bottom:3px;
+  font-family:var(--head);font-weight:600}
+.stat-value{font-size:21px;font-weight:700;font-family:var(--head);color:var(--c,var(--accent))}
+
+/* MAIN */
+.main{position:relative;z-index:1;flex:1;display:flex;overflow:hidden}
+
+/* SIDEBAR */
+.sidebar{width:290px;flex-shrink:0;border-right:1px solid var(--border);
+  display:flex;flex-direction:column;overflow-y:auto;padding:16px;gap:12px}
+
+.upload-zone{background:var(--card);border:1.5px dashed rgba(0,212,255,0.25);
+  border-radius:8px;padding:20px 14px;text-align:center;cursor:pointer;
+  transition:all .25s;position:relative;overflow:hidden;flex-shrink:0}
+.upload-zone:hover,.upload-zone.over{border-color:var(--accent);background:rgba(0,212,255,0.04)}
+.upload-zone.ready{border-style:solid;border-color:rgba(16,185,129,.4);background:rgba(16,185,129,.03)}
+.upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.upload-icon{margin:0 auto 10px;width:38px;height:38px;display:flex;align-items:center;
+  justify-content:center;background:rgba(0,212,255,.07);
+  border:1px solid rgba(0,212,255,.2);border-radius:6px}
+.upload-icon svg{width:20px;height:20px}
+.upload-title{font-size:13px;color:var(--text);margin-bottom:3px;font-family:var(--head);font-weight:600}
+.upload-hint{font-size:11px;color:var(--muted);letter-spacing:1px;font-family:var(--head)}
+#fname{margin-top:8px;font-size:12px;color:#6ee7b7;display:none;font-family:var(--head);font-weight:600}
+
+.ctrl-box{background:var(--card);border:1px solid var(--border);border-radius:7px;padding:11px 13px}
+.ctrl-label{font-size:10px;letter-spacing:2px;color:var(--muted);margin-bottom:8px;
+  font-family:var(--head);font-weight:600}
+.model-row{display:flex;gap:6px}
+.mbtn{flex:1;padding:9px 4px;border:1px solid var(--border);background:transparent;
+  color:var(--muted);border-radius:5px;font-family:var(--head);font-size:13px;
+  font-weight:600;cursor:pointer;transition:all .2s;letter-spacing:1px}
+.mbtn.on{border-color:var(--accent2);background:rgba(124,58,237,.15);color:#c4b5fd}
+.mbtn:hover:not(.on){border-color:rgba(255,255,255,.2);color:var(--text)}
+.slider-row{display:flex;align-items:center;gap:8px}
+.slider-row input[type=range]{flex:1;accent-color:var(--accent);cursor:pointer}
+.slider-val{font-size:13px;color:var(--accent);min-width:48px;text-align:right;
+  font-family:var(--head);font-weight:600}
+
+.run-btn{width:100%;padding:12px;border:1px solid var(--accent);
+  background:linear-gradient(135deg,rgba(0,212,255,.1),rgba(124,58,237,.1));
+  border-radius:7px;color:var(--accent);font-family:var(--head);font-size:15px;
+  font-weight:700;letter-spacing:3px;cursor:pointer;transition:all .25s;
+  position:relative;overflow:hidden;flex-shrink:0}
+.run-btn:hover:not(:disabled){
+  background:linear-gradient(135deg,rgba(0,212,255,.2),rgba(124,58,237,.2));
+  box-shadow:0 0 20px rgba(0,212,255,.18)}
+.run-btn:disabled{opacity:.35;cursor:not-allowed}
+.run-btn .shine{position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.06),transparent);
+  transform:translateX(-100%)}
+.run-btn:hover:not(:disabled) .shine{animation:shine .6s ease forwards}
+@keyframes shine{to{transform:translateX(100%)}}
+
+.alert{display:none;background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.25);
+  border-radius:7px;padding:10px 12px;gap:8px;flex-shrink:0}
+.alert.show{display:flex;align-items:flex-start}
+.alert-ico{font-size:15px;flex-shrink:0}
+.alert-title{font-size:12px;color:#fca5a5;font-family:var(--head);font-weight:700;margin-bottom:2px}
+.alert-body{font-size:11px;color:var(--muted);line-height:1.7;font-family:var(--head)}
+
+.sidebar-section{font-size:10px;letter-spacing:2px;color:var(--muted);
+  font-family:var(--head);font-weight:600;display:flex;align-items:center;gap:8px}
+.sidebar-section::after{content:'';flex:1;height:1px;background:var(--border)}
+.threats{display:flex;flex-direction:column;gap:4px}
+.tc{background:var(--card);border:1px solid var(--border);border-radius:5px;
+  padding:7px 10px;position:relative;overflow:hidden;
+  display:flex;align-items:center;justify-content:space-between}
+.tc-label{font-size:10px;letter-spacing:1px;color:var(--muted);
+  font-family:var(--head);font-weight:600;margin-bottom:2px}
+.tc-count{font-size:16px;font-weight:700;font-family:var(--head)}
+.tc-pct{font-size:11px;font-family:var(--head);font-weight:600}
+.tc-bar{position:absolute;bottom:0;left:0;height:2px;transition:width .9s cubic-bezier(.4,0,.2,1)}
+
+/* CONTENT */
+.content{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.error-box{background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.25);
+  border-radius:7px;padding:12px 14px;font-size:12px;color:#fca5a5;
+  white-space:pre-wrap;display:none;font-family:var(--head);margin:16px}
+.error-box.show{display:block}
+
+#loader{display:none;text-align:center;padding:60px 20px;
+  flex-direction:column;align-items:center;justify-content:center;flex:1}
+#loader.show{display:flex}
+.bars{display:inline-flex;gap:5px;margin-bottom:14px}
+.bars span{width:4px;height:20px;background:var(--accent);border-radius:2px;animation:bar .9s ease infinite}
+.bars span:nth-child(2){animation-delay:.12s}
+.bars span:nth-child(3){animation-delay:.24s}
+.bars span:nth-child(4){animation-delay:.36s}
+@keyframes bar{0%,100%{transform:scaleY(1);opacity:.4}50%{transform:scaleY(.35);opacity:1}}
+#loader-msg{font-size:13px;color:var(--muted);letter-spacing:2px;font-family:var(--head);font-weight:600}
+
+#welcome{flex:1;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:14px;color:var(--muted);padding:40px}
+#welcome.hide{display:none}
+.welcome-icon{font-size:52px;opacity:.15}
+.welcome-text{font-family:var(--head);font-size:15px;letter-spacing:2px;opacity:.35}
+
+#results{display:none;flex:1;overflow:hidden;flex-direction:column}
+#results.show{display:flex}
+
+/* TABS */
+.tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0;
+  background:rgba(10,14,26,.6)}
+.tab{padding:10px 22px;font-family:var(--head);font-size:13px;font-weight:600;
+  letter-spacing:1.5px;color:var(--muted);cursor:pointer;
+  border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap}
+.tab.on{color:var(--accent);border-bottom-color:var(--accent)}
+.tab:hover:not(.on){color:var(--text)}
+.tab-panel{display:none;overflow-y:auto;flex:1;padding:18px 22px}
+.tab-panel.on{display:block}
+
+.section-title{font-size:10px;letter-spacing:3px;color:var(--muted);margin-bottom:10px;
+  display:flex;align-items:center;gap:10px;font-family:var(--head);font-weight:600}
+.section-title::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* TABLES */
+.table-wrap{background:var(--card);border:1px solid var(--border);
+  border-radius:8px;overflow:auto;margin-bottom:16px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead th{background:rgba(0,212,255,.06);padding:10px 12px;text-align:left;
+  font-size:10px;letter-spacing:2px;color:var(--accent);
+  border-bottom:1px solid var(--border);white-space:nowrap;
+  font-family:var(--head);font-weight:700;position:sticky;top:0;z-index:2}
+tbody td{padding:9px 12px;border-bottom:1px solid var(--border2);
+  color:var(--text);font-size:12px;white-space:nowrap}
+tbody tr:last-child td{border:none}
+tbody tr:hover td{background:rgba(0,212,255,.03)}
+
+.pill{display:inline-block;padding:2px 9px;border-radius:3px;font-size:11px;
+  letter-spacing:1px;font-family:var(--head);font-weight:700}
+.pill.benign{background:rgba(16,185,129,.12);color:#6ee7b7}
+.pill.attack{background:rgba(239,68,68,.12);color:#fca5a5}
+.pill.warn{background:rgba(245,158,11,.12);color:#fcd34d}
+
+/* CHART */
+.chart-card{background:var(--card);border:1px solid var(--border);
+  border-radius:8px;padding:16px;margin-bottom:16px}
+.chart-area{display:flex;align-items:flex-end;gap:8px;height:140px;padding-top:10px}
+.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+.bar-fill{width:100%;border-radius:3px 3px 0 0;transition:height 1s cubic-bezier(.4,0,.2,1)}
+.bar-label{font-size:9px;color:var(--muted);text-align:center;writing-mode:vertical-lr;
+  transform:rotate(180deg);height:50px;overflow:hidden;font-family:var(--head);font-weight:600}
+.chart-legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;justify-content:center}
+.legend-item{display:flex;align-items:center;gap:5px;font-size:11px;
+  color:var(--muted);font-family:var(--head);font-weight:600}
+.legend-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+
+/* FOOTER */
+.footbar{flex-shrink:0;border-top:1px solid var(--border);padding:6px 20px;
+  font-size:10px;color:var(--muted);letter-spacing:1.5px;
+  font-family:var(--head);font-weight:600;text-align:center;
+  position:relative;z-index:5}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="live-badge"><span class="dot"></span>SYSTEM ONLINE</div>
+    <div>
+      <div class="topbar-title">Cyber Threat Detection Platform</div>
+      <div class="topbar-sub">NETWORK INTRUSION DETECTION SYSTEM — CICIDS2017 · SMOTE · RF + SVM</div>
+    </div>
+  </div>
+  <div class="topbar-credits">
+    Developed by: <strong>عباس فاضل عباس</strong><br>
+    Supervised by: <strong>م. ناديه محمود حسين</strong>
+  </div>
+</div>
+
+<!-- STATS BAR -->
+<div class="statsbar">
+  <div class="stat" style="--c:#00d4ff">
+    <div class="stat-label">TOTAL FLOWS</div>
+    <div class="stat-value" id="stat-total">—</div>
+  </div>
+  <div class="stat" style="--c:#ef4444">
+    <div class="stat-label">ATTACK FLOWS</div>
+    <div class="stat-value" id="stat-attacks">—</div>
+  </div>
+  <div class="stat" style="--c:#a78bfa">
+    <div class="stat-label">ATTACK CLASSES</div>
+    <div class="stat-value" id="stat-classes">—</div>
+  </div>
+  <div class="stat" style="--c:#f59e0b">
+    <div class="stat-label">ACTIVE MODEL</div>
+    <div class="stat-value" id="stat-model">RF</div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+
+    <div class="upload-zone" id="dropzone">
+      <input type="file" id="fileInput" accept=".csv" onchange="handleFile(this)">
+      <div class="upload-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#00d4ff" stroke-width="1.5"
+             stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 15V3m0 0L8 7m4-4 4 4"/>
+          <path d="M2 17l.621 2.485A2 2 0 0 0 4.561 21h14.878a2 2 0 0 0 1.94-1.515L22 17"
+                opacity=".5"/>
+        </svg>
+      </div>
+      <div class="upload-title">DROP CSV HERE</div>
+      <div class="upload-hint">or click to browse</div>
+      <div id="fname"></div>
+    </div>
+
+    <div class="ctrl-box">
+      <div class="ctrl-label">DETECTION MODEL</div>
+      <div class="model-row">
+        <button class="mbtn on" id="btn-rf"  onclick="setModel('RF')">Random Forest</button>
+        <button class="mbtn"    id="btn-svm" onclick="setModel('SVM')">SVM</button>
+      </div>
+    </div>
+
+    <div class="ctrl-box">
+      <div class="ctrl-label">SAMPLE DISPLAY LIMIT</div>
+      <div class="slider-row">
+        <input type="range" min="10" max="100" value="20" id="limit" step="10"
+               oninput="document.getElementById('lv').textContent=this.value+' rows'">
+        <span class="slider-val" id="lv">20 rows</span>
+      </div>
+    </div>
+
+    <button class="run-btn" id="runBtn" onclick="runAnalysis()" disabled>
+      <span class="shine"></span>ANALYSE TRAFFIC
+    </button>
+
+    <div class="alert" id="alertBox">
+      <div class="alert-ico">&#9888;</div>
+      <div>
+        <div class="alert-title" id="alert-title"></div>
+        <div class="alert-body"  id="alert-body"></div>
+      </div>
+    </div>
+
+    <div class="sidebar-section" id="threatTitle" style="display:none">THREAT BREAKDOWN</div>
+    <div class="threats" id="threatCards"></div>
+
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <div class="error-box" id="errBox"></div>
+
+    <div id="loader">
+      <div class="bars"><span></span><span></span><span></span><span></span></div>
+      <div id="loader-msg">INITIALIZING...</div>
+    </div>
+
+    <div id="welcome">
+      <div class="welcome-icon">🛡</div>
+      <div class="welcome-text">UPLOAD A CSV FILE TO BEGIN ANALYSIS</div>
+    </div>
+
+    <div id="results">
+
+      <div class="tabs">
+        <div class="tab on" data-panel="tab-features" onclick="switchTab(this)">
+          PREDICTION RESULTS
+        </div>
+        <div class="tab" data-panel="tab-chart" onclick="switchTab(this)">
+          TRAFFIC CHART
+        </div>
+        <div class="tab" data-panel="tab-stats" onclick="switchTab(this)">
+          ATTACK STATISTICS
+        </div>
+      </div>
+
+      <!-- Tab 1: Prediction Results + Top 20 Features -->
+      <div class="tab-panel on" id="tab-features">
+        <div class="section-title">PREDICTION RESULTS (SAMPLE) — TOP 20 FEATURES</div>
+        <div class="table-wrap">
+          <table>
+            <thead id="featuresHead"></thead>
+            <tbody id="featuresBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Tab 2: Chart + Detection Log -->
+      <div class="tab-panel" id="tab-chart">
+        <div class="section-title">TRAFFIC VOLUME ANALYSIS</div>
+        <div class="chart-card">
+          <div class="chart-area"   id="chartArea"></div>
+          <div class="chart-legend" id="chartLegend"></div>
+        </div>
+        <div class="section-title">DETECTION LOG</div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th><th>SOURCE IP</th><th>DESTINATION IP</th>
+                <th>CLASSIFICATION</th><th>SEVERITY</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Tab 3: Attack Statistics -->
+      <div class="tab-panel" id="tab-stats">
+        <div class="section-title">ATTACK STATISTICS</div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ATTACK TYPE</th><th>COUNT</th><th>PERCENTAGE</th><th>DESCRIPTION</th>
+              </tr>
+            </thead>
+            <tbody id="statsTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div><!-- /results -->
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<div class="footbar">
+  CICIDS2017 &nbsp;·&nbsp; SMOTE BALANCED &nbsp;·&nbsp;
+  RANDOM FOREST + SVM &nbsp;·&nbsp; MULTI-CLASS IDS
+</div>
+
+<script>
+let selectedModel = 'RF';
+let hasFile = false;
+const WARN_LABELS = new Set([
+  'FTP-Patator','SSH-Patator','PortScan',
+  'DoS slowloris','DoS Slowhttptest','DoS GoldenEye'
+]);
+const LOADER_MSGS = [
+  'INITIALIZING DETECTION ENGINE...',
+  'LOADING MODEL PARAMETERS...',
+  'PREPROCESSING FEATURE VECTORS...',
+  'CLASSIFYING TRAFFIC FLOWS...',
+  'AGGREGATING THREAT INTELLIGENCE...',
+  'GENERATING REPORT...',
+];
+
+function switchTab(el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('on'));
+  el.classList.add('on');
+  document.getElementById(el.dataset.panel).classList.add('on');
+}
+
+function setModel(m) {
+  selectedModel = m;
+  document.getElementById('btn-rf').classList.toggle('on',  m === 'RF');
+  document.getElementById('btn-svm').classList.toggle('on', m === 'SVM');
+  document.getElementById('stat-model').textContent = m;
+}
+
+function handleFile(input) {
+  if (!input.files.length) return;
+  hasFile = true;
+  const fn = document.getElementById('fname');
+  fn.style.display = 'block';
+  fn.textContent = '▶ ' + input.files[0].name;
+  document.getElementById('dropzone').classList.add('ready');
+  document.getElementById('runBtn').disabled = false;
+}
+
+const dz = document.getElementById('dropzone');
+dz.addEventListener('dragover',  e => { e.preventDefault(); dz.classList.add('over'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('over'));
+dz.addEventListener('drop', e => {
+  e.preventDefault();
+  dz.classList.remove('over');
+  if (e.dataTransfer.files.length) {
+    document.getElementById('fileInput').files = e.dataTransfer.files;
+    handleFile({ files: e.dataTransfer.files });
+  }
+});
+
+async function runAnalysis() {
+  if (!hasFile) return;
+  document.getElementById('loader').classList.add('show');
+  document.getElementById('welcome').classList.add('hide');
+  document.getElementById('results').classList.remove('show');
+  document.getElementById('errBox').classList.remove('show');
+  document.getElementById('runBtn').disabled = true;
+
+  let mi = 0;
+  const iv = setInterval(() => {
+    if (mi < LOADER_MSGS.length)
+      document.getElementById('loader-msg').textContent = LOADER_MSGS[mi++];
+  }, 400);
+
+  const fd = new FormData();
+  fd.append('file',  document.getElementById('fileInput').files[0]);
+  fd.append('model', selectedModel);
+  fd.append('limit', document.getElementById('limit').value);
+
+  try {
+    const res  = await fetch('/predict', { method: 'POST', body: fd });
+    const data = await res.json();
+    clearInterval(iv);
+    document.getElementById('loader').classList.remove('show');
+    document.getElementById('runBtn').disabled = false;
+    data.error ? showError(data.error) : renderResults(data);
+  } catch (err) {
+    clearInterval(iv);
+    document.getElementById('loader').classList.remove('show');
+    document.getElementById('runBtn').disabled = false;
+    showError('Network error: ' + err.message);
+  }
+}
+
+function renderResults(data) {
+  const { summary, sample, dominant, total,
+          attack_count, num_classes, display_features } = data;
+
+  // ── Dynamic stats ──
+  document.getElementById('stat-total').textContent   = total.toLocaleString();
+  document.getElementById('stat-attacks').textContent = attack_count.toLocaleString();
+  document.getElementById('stat-classes').textContent = num_classes;
+
+  // ── Alert ──
+  if (dominant && dominant.label !== 'BENIGN') {
+    document.getElementById('alertBox').classList.add('show');
+    document.getElementById('alert-title').textContent =
+      '⚠ ' + dominant.label + ' (' + dominant.pct + '%)';
+    document.getElementById('alert-body').textContent = dominant.info;
+  } else {
+    document.getElementById('alertBox').classList.remove('show');
+  }
+
+  // ── Threat mini-cards ──
+  document.getElementById('threatTitle').style.display = '';
+  const tc = document.getElementById('threatCards');
+  tc.innerHTML = '';
+  summary.forEach(s => {
+    tc.innerHTML += `
+      <div class="tc">
+        <div>
+          <div class="tc-label">${s.label}</div>
+          <div class="tc-count" style="color:${s.color}">${s.count.toLocaleString()}</div>
+        </div>
+        <div class="tc-pct" style="color:${s.color}">${s.pct}%</div>
+        <div class="tc-bar"
+             style="width:${Math.max(s.pct,2)}%;background:${s.color};opacity:.4">
+        </div>
+      </div>`;
+  });
+
+  // ── Prediction Results table (Top 20 features) ──
+  const fH = document.getElementById('featuresHead');
+  const fB = document.getElementById('featuresBody');
+  fH.innerHTML = ''; fB.innerHTML = '';
+  const cols = display_features && display_features.length > 0 ? display_features : [];
+
+  let th = '<tr><th>#</th><th>PREDICTION</th>';
+  cols.forEach(f => { th += `<th>${f}</th>`; });
+  th += '</tr>';
+  fH.innerHTML = th;
+
+  sample.forEach(row => {
+    const isBenign = row.label === 'BENIGN';
+    const isWarn   = WARN_LABELS.has(row.label);
+    const pc = isBenign ? 'benign' : isWarn ? 'warn' : 'attack';
+    let tr = `<tr>
+      <td style="color:var(--muted)">${String(row.num).padStart(2,'0')}</td>
+      <td><span class="pill ${pc}">${row.label}</span></td>`;
+    cols.forEach(f => {
+      const v = row.features ? row.features[f] : '—';
+      tr += `<td>${v !== undefined ? v : '—'}</td>`;
+    });
+    tr += '</tr>';
+    fB.innerHTML += tr;
+  });
+
+  // ── Chart ──
+  const ca = document.getElementById('chartArea');
+  const cl = document.getElementById('chartLegend');
+  ca.innerHTML = ''; cl.innerHTML = '';
+  const mx = Math.max(...summary.map(s => s.count));
+  summary.forEach(s => {
+    const h = Math.max(4, Math.round((s.count / mx) * 120));
+    ca.innerHTML += `
+      <div class="bar-col">
+        <div class="bar-fill"
+             style="height:${h}px;background:${s.color};opacity:.85"></div>
+        <div class="bar-label">${s.label}</div>
+      </div>`;
+    cl.innerHTML += `
+      <div class="legend-item">
+        <div class="legend-dot" style="background:${s.color}"></div>${s.label}
+      </div>`;
+  });
+
+  // ── Detection Log ──
+  const tb = document.getElementById('tableBody');
+  tb.innerHTML = '';
+  sample.forEach(row => {
+    const isBenign = row.label === 'BENIGN';
+    const isWarn   = WARN_LABELS.has(row.label);
+    const pc = isBenign ? 'benign' : isWarn ? 'warn' : 'attack';
+    const sv = isBenign ? 'LOW' : isWarn ? 'MEDIUM' : 'HIGH';
+    const sc = isBenign ? '#10b981' : isWarn ? '#f59e0b' : '#ef4444';
+    tb.innerHTML += `
+      <tr>
+        <td style="color:var(--muted)">${String(row.num).padStart(2,'0')}</td>
+        <td>${row.src}</td>
+        <td>${row.dst}</td>
+        <td><span class="pill ${pc}">${row.label}</span></td>
+        <td style="color:${sc};font-family:var(--head);font-weight:700;
+                   letter-spacing:1px">${sv}</td>
+      </tr>`;
+  });
+
+  // ── Attack Statistics ──
+  const st = document.getElementById('statsTableBody');
+  st.innerHTML = '';
+  summary.forEach(s => {
+    const pc = s.label === 'BENIGN' ? 'benign' : 'attack';
+    st.innerHTML += `
+      <tr>
+        <td><span class="pill ${pc}">${s.label}</span></td>
+        <td style="color:${s.color};font-family:var(--head);font-weight:700">
+          ${s.count.toLocaleString()}</td>
+        <td style="color:var(--muted)">${s.pct}%</td>
+        <td style="color:var(--muted);font-size:11px">${s.info}</td>
+      </tr>`;
+  });
+
+  document.getElementById('results').classList.add('show');
+  document.querySelectorAll('.tab')[0].click();
+}
+
+function showError(msg) {
+  const eb = document.getElementById('errBox');
+  eb.textContent = msg;
+  eb.classList.add('show');
+}
+</script>
+</body>
+</html>
